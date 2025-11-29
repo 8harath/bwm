@@ -1,6 +1,8 @@
 "use client"
 
 import Link from "next/link"
+import { fundingData } from "@/data/funding-data"
+import { useMemo } from "react"
 
 interface DealDetailProps {
   deal: {
@@ -19,6 +21,24 @@ interface DealDetailProps {
 }
 
 export function DealDetail({ deal }: DealDetailProps) {
+  // Find similar deals based on sectors and stage
+  const similarDeals = useMemo(() => {
+    return fundingData
+      .filter((d) => {
+        // Exclude current deal
+        if (d.id === deal.id) return false
+
+        // Same stage gets priority
+        const sameStage = d.stage === deal.stage
+
+        // Shared sectors
+        const sharedSectors = d.sectors.some((sector) => deal.sectors.includes(sector))
+
+        return sameStage || sharedSectors
+      })
+      .slice(0, 3) // Get top 3 similar deals
+  }, [deal])
+
   return (
     <main className="max-w-4xl mx-auto px-4 md:px-6 py-12">
       {/* Header */}
@@ -95,6 +115,30 @@ export function DealDetail({ deal }: DealDetailProps) {
           >
             View Original Source →<span className="group-hover:translate-x-1 transition">↗</span>
           </a>
+        </div>
+      )}
+
+      {/* Similar Deals */}
+      {similarDeals.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-6">SIMILAR DEALS</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {similarDeals.map((similar) => (
+              <Link
+                key={similar.id}
+                href={`/deal/${similar.id}`}
+                className="neo-border neo-hover p-6 bg-white block transition-transform"
+              >
+                <h3 className="font-bold mb-2 hover:text-green-700 transition">{similar.company}</h3>
+                <div className="text-xl font-black text-green-700 mb-2">${(similar.amount / 1000).toFixed(1)}M</div>
+                <div className="text-sm font-bold text-gray-600 mb-2">{similar.stage}</div>
+                <div className="text-xs text-gray-600">
+                  {similar.sectors[0]}
+                  {similar.sectors.length > 1 && ` +${similar.sectors.length - 1}`}
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 

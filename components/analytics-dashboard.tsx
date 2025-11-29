@@ -18,55 +18,94 @@ import {
 } from "recharts"
 
 export function AnalyticsDashboard() {
-  const [fundingByMonth, fundingBySector, fundingByStage, topInvestors] = useMemo(() => {
-    // Funding over time
-    const monthMap = new Map<string, number>()
-    fundingData.forEach((d) => {
-      const month = new Date(d.date).toLocaleString("default", { month: "short", year: "2-digit" })
-      monthMap.set(month, (monthMap.get(month) || 0) + d.amount)
-    })
-    const fundingOverTime = Array.from(monthMap.entries()).map(([month, amount]) => ({
-      month,
-      amount: Math.round(amount / 100),
-    }))
-
-    // By sector
-    const sectorMap = new Map<string, { count: number; amount: number }>()
-    fundingData.forEach((d) => {
-      d.sectors.forEach((sector) => {
-        const current = sectorMap.get(sector) || { count: 0, amount: 0 }
-        sectorMap.set(sector, { count: current.count + 1, amount: current.amount + d.amount })
+  const [fundingByMonth, fundingBySector, fundingByStage, topInvestors, dealSizeDistribution, monthlyDealCount] =
+    useMemo(() => {
+      // Funding over time
+      const monthMap = new Map<string, number>()
+      fundingData.forEach((d) => {
+        const month = new Date(d.date).toLocaleString("default", { month: "short", year: "2-digit" })
+        monthMap.set(month, (monthMap.get(month) || 0) + d.amount)
       })
-    })
-    const bySektor = Array.from(sectorMap.entries())
-      .map(([name, { count, amount }]) => ({ name, value: Math.round(amount / 100), deals: count }))
-      .sort((a, b) => b.value - a.value)
+      const fundingOverTime = Array.from(monthMap.entries())
+        .map(([month, amount]) => ({
+          month,
+          amount: Math.round(amount / 100),
+        }))
+        .sort((a, b) => {
+          const dateA = new Date(a.month)
+          const dateB = new Date(b.month)
+          return dateA.getTime() - dateB.getTime()
+        })
 
-    // By stage
-    const stageMap = new Map<string, { count: number; amount: number }>()
-    fundingData.forEach((d) => {
-      const current = stageMap.get(d.stage) || { count: 0, amount: 0 }
-      stageMap.set(d.stage, { count: current.count + 1, amount: current.amount + d.amount })
-    })
-    const byStage = Array.from(stageMap.entries())
-      .map(([stage, { count, amount }]) => ({ stage, count, amount: Math.round(amount / 100) }))
-      .sort((a, b) => b.amount - a.amount)
-
-    // Top investors
-    const investorMap = new Map<string, { count: number; amount: number }>()
-    fundingData.forEach((d) => {
-      d.investors.forEach((inv) => {
-        const current = investorMap.get(inv) || { count: 0, amount: 0 }
-        investorMap.set(inv, { count: current.count + 1, amount: current.amount + d.amount })
+      // Monthly deal count
+      const monthDealMap = new Map<string, number>()
+      fundingData.forEach((d) => {
+        const month = new Date(d.date).toLocaleString("default", { month: "short", year: "2-digit" })
+        monthDealMap.set(month, (monthDealMap.get(month) || 0) + 1)
       })
-    })
-    const topInv = Array.from(investorMap.entries())
-      .map(([name, { count, amount }]) => ({ name, deals: count, amount: Math.round(amount / 100) }))
-      .sort((a, b) => b.deals - a.deals)
-      .slice(0, 8)
+      const dealCountByMonth = Array.from(monthDealMap.entries())
+        .map(([month, count]) => ({
+          month,
+          deals: count,
+        }))
+        .sort((a, b) => {
+          const dateA = new Date(a.month)
+          const dateB = new Date(b.month)
+          return dateA.getTime() - dateB.getTime()
+        })
 
-    return [fundingOverTime, bySektor, byStage, topInv]
-  }, [])
+      // By sector
+      const sectorMap = new Map<string, { count: number; amount: number }>()
+      fundingData.forEach((d) => {
+        d.sectors.forEach((sector) => {
+          const current = sectorMap.get(sector) || { count: 0, amount: 0 }
+          sectorMap.set(sector, { count: current.count + 1, amount: current.amount + d.amount })
+        })
+      })
+      const bySektor = Array.from(sectorMap.entries())
+        .map(([name, { count, amount }]) => ({ name, value: Math.round(amount / 100), deals: count }))
+        .sort((a, b) => b.value - a.value)
+
+      // By stage
+      const stageMap = new Map<string, { count: number; amount: number }>()
+      fundingData.forEach((d) => {
+        const current = stageMap.get(d.stage) || { count: 0, amount: 0 }
+        stageMap.set(d.stage, { count: current.count + 1, amount: current.amount + d.amount })
+      })
+      const byStage = Array.from(stageMap.entries())
+        .map(([stage, { count, amount }]) => ({ stage, count, amount: Math.round(amount / 100) }))
+        .sort((a, b) => b.amount - a.amount)
+
+      // Top investors
+      const investorMap = new Map<string, { count: number; amount: number }>()
+      fundingData.forEach((d) => {
+        d.investors.forEach((inv) => {
+          const current = investorMap.get(inv) || { count: 0, amount: 0 }
+          investorMap.set(inv, { count: current.count + 1, amount: current.amount + d.amount })
+        })
+      })
+      const topInv = Array.from(investorMap.entries())
+        .map(([name, { count, amount }]) => ({ name, deals: count, amount: Math.round(amount / 100) }))
+        .sort((a, b) => b.deals - a.deals)
+        .slice(0, 8)
+
+      // Deal size distribution
+      const buckets = [
+        { range: "<$1M", min: 0, max: 1000 },
+        { range: "$1-5M", min: 1000, max: 5000 },
+        { range: "$5-10M", min: 5000, max: 10000 },
+        { range: "$10-20M", min: 10000, max: 20000 },
+        { range: "$20-50M", min: 20000, max: 50000 },
+        { range: "$50M+", min: 50000, max: Infinity },
+      ]
+
+      const dealSizeDist = buckets.map((bucket) => ({
+        range: bucket.range,
+        deals: fundingData.filter((d) => d.amount >= bucket.min && d.amount < bucket.max).length,
+      }))
+
+      return [fundingOverTime, bySektor, byStage, topInv, dealSizeDist, dealCountByMonth]
+    }, [])
 
   const colors = ["#1A5D1A", "#0D3D0D", "#2A7D2A", "#3A9D3A", "#4ABD4A", "#5ACD5A", "#6ADD6A", "#7AED7A"]
 
@@ -140,6 +179,34 @@ export function AnalyticsDashboard() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Deal Size Distribution */}
+      <div className="neo-border p-6 md:p-8 bg-white">
+        <h3 className="text-lg font-bold uppercase mb-6 text-green-700">DEAL SIZE DISTRIBUTION</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={dealSizeDistribution}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#000" />
+            <XAxis dataKey="range" stroke="#000" />
+            <YAxis stroke="#000" label={{ value: "Number of Deals", angle: -90, position: "insideLeft" }} />
+            <Tooltip contentStyle={{ backgroundColor: "#fff", border: "4px solid #000" }} />
+            <Bar dataKey="deals" fill="#1A5D1A" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Monthly Deal Flow */}
+      <div className="neo-border p-6 md:p-8 bg-white">
+        <h3 className="text-lg font-bold uppercase mb-6 text-green-700">MONTHLY DEAL FLOW</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={monthlyDealCount}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#000" />
+            <XAxis dataKey="month" stroke="#000" />
+            <YAxis stroke="#000" label={{ value: "Number of Deals", angle: -90, position: "insideLeft" }} />
+            <Tooltip contentStyle={{ backgroundColor: "#fff", border: "4px solid #000" }} />
+            <Bar dataKey="deals" fill="#2A7D2A" />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   )

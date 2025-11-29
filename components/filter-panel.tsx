@@ -98,25 +98,27 @@ export function FilterPanel({
 
       {/* Funding Range */}
       <div>
-        <h4 className="font-bold text-sm uppercase mb-3">Funding Range</h4>
+        <h4 className="font-bold text-sm uppercase mb-3">Funding Range (USD)</h4>
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-gray-600">Min: ₹{fundingRange[0]}Cr</label>
+            <label className="text-xs text-gray-600">Min: ${(fundingRange[0] / 1000).toFixed(1)}M</label>
             <input
               type="range"
               min="0"
-              max="1000"
+              max="30000"
+              step="500"
               value={fundingRange[0]}
               onChange={(e) => setFundingRange([Number(e.target.value), fundingRange[1]])}
               className="w-full"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-600">Max: ₹{fundingRange[1]}Cr</label>
+            <label className="text-xs text-gray-600">Max: ${(fundingRange[1] / 1000).toFixed(1)}M</label>
             <input
               type="range"
               min="0"
-              max="1000"
+              max="30000"
+              step="500"
               value={fundingRange[1]}
               onChange={(e) => setFundingRange([fundingRange[0], Number(e.target.value)])}
               className="w-full"
