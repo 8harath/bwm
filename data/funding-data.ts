@@ -1,5 +1,5 @@
 // Auto-generated from CSV files in funding_data/
-// Last updated: 2025-11-29T10:32:03.621Z
+// Last updated: 2025-11-29T10:40:06.148Z
 // Total deals: 1316
 
 export interface FundingDeal {
