@@ -4,28 +4,38 @@ interface FilterPanelProps {
   sectors: string[]
   stages: string[]
   locations: string[]
+  years: string[]
   selectedSectors: string[]
   setSelectedSectors: (s: string[]) => void
   selectedStages: string[]
   setSelectedStages: (s: string[]) => void
   selectedLocation: string
   setSelectedLocation: (l: string) => void
+  selectedYears: string[]
+  setSelectedYears: (y: string[]) => void
   fundingRange: [number, number]
   setFundingRange: (r: [number, number]) => void
+  showUndisclosed: boolean
+  setShowUndisclosed: (b: boolean) => void
 }
 
 export function FilterPanel({
   sectors,
   stages,
   locations,
+  years,
   selectedSectors,
   setSelectedSectors,
   selectedStages,
   setSelectedStages,
   selectedLocation,
   setSelectedLocation,
+  selectedYears,
+  setSelectedYears,
   fundingRange,
   setFundingRange,
+  showUndisclosed,
+  setShowUndisclosed,
 }: FilterPanelProps) {
   return (
     <div className="neo-border p-6 bg-white h-fit md:sticky md:top-24">
@@ -96,16 +106,41 @@ export function FilterPanel({
         </select>
       </div>
 
+      {/* Year Filter */}
+      <div className="mb-8 pb-6 border-b-2 border-gray-200">
+        <h4 className="font-bold text-sm uppercase mb-3">Year</h4>
+        <div className="max-h-40 overflow-y-auto space-y-2">
+          {years.map((year) => (
+            <label key={year} className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedYears.includes(year)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedYears([...selectedYears, year])
+                  } else {
+                    setSelectedYears(selectedYears.filter((y) => y !== year))
+                  }
+                }}
+                className="w-5 h-5 border-2 border-black cursor-pointer"
+              />
+              <span className="text-sm">{year}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       {/* Funding Range */}
-      <div>
-        <h4 className="font-bold text-sm uppercase mb-3">Funding Range</h4>
+      <div className="mb-8 pb-6 border-b-2 border-gray-200">
+        <h4 className="font-bold text-sm uppercase mb-3">Funding Range (₹Cr)</h4>
         <div className="space-y-3">
           <div>
             <label className="text-xs text-gray-600">Min: ₹{fundingRange[0]}Cr</label>
             <input
               type="range"
               min="0"
-              max="1000"
+              max="10000"
+              step="10"
               value={fundingRange[0]}
               onChange={(e) => setFundingRange([Number(e.target.value), fundingRange[1]])}
               className="w-full"
@@ -116,13 +151,27 @@ export function FilterPanel({
             <input
               type="range"
               min="0"
-              max="1000"
+              max="10000"
+              step="10"
               value={fundingRange[1]}
               onChange={(e) => setFundingRange([fundingRange[0], Number(e.target.value)])}
               className="w-full"
             />
           </div>
         </div>
+      </div>
+
+      {/* Undisclosed Amounts */}
+      <div>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showUndisclosed}
+            onChange={(e) => setShowUndisclosed(e.target.checked)}
+            className="w-5 h-5 border-2 border-black cursor-pointer"
+          />
+          <span className="text-sm font-semibold">Show Undisclosed Amounts</span>
+        </label>
       </div>
     </div>
   )
