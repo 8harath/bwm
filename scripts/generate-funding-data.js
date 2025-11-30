@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { USD_TO_INR, LAST_UPDATED } = require('../config/currency');
 
 // Read all CSV files from funding_data directory
 function getAllCSVFiles() {
@@ -95,10 +96,13 @@ function transformDeal(deal, id, weekFolder) {
     }
   }
 
-  let amount = parseFloat(deal['Amount ($M)'] || deal.Amount || '0');
+  // Parse amount - strip $ and commas
+  let amountStr = (deal['Amount ($M)'] || deal.Amount || '0').toString();
+  amountStr = amountStr.replace(/[$,]/g, '').trim();
+  let amount = parseFloat(amountStr);
 
   // Handle NaN from parseFloat
-  if (isNaN(amount)) {
+  if (isNaN(amount) || amountStr === '') {
     amount = 0;
   }
 
@@ -113,17 +117,23 @@ function transformDeal(deal, id, weekFolder) {
     return null;
   }
 
+  // Convert USD millions to INR lakhs (1 Cr = 100 lakhs, 1 Cr = 10M INR)
+  // Exchange rate configured in config/currency.js
+  // Current rate: 1 USD = ₹${USD_TO_INR} (as of ${LAST_UPDATED})
+  const amountInLakhs = amount * USD_TO_INR * 10; // $M to INR lakhs
+  const amountInCrores = amount * USD_TO_INR / 10; // $M to INR crores
+
   return {
     id,
     company: companyName,
-    amount: amount * 1000, // Convert $M to $K for consistency
+    amount: amountInLakhs, // Store in lakhs (divide by 100 to get crores)
     stage,
     sectors: [sector],
     investors: ['Not Disclosed'], // CSV doesn't have investor data
     leadInvestor: 'Not Disclosed',
     date,
     location,
-    description: `${companyName} raised ${amount > 0 ? '$' + amount + 'M' : 'funding'} in ${stage} ${stage !== 'Not Disclosed' ? 'round' : ''}.`,
+    description: `${companyName} raised ${amount > 0 ? '₹' + amountInCrores.toFixed(1) + ' Cr' : 'funding'} in ${stage} ${stage !== 'Not Disclosed' ? 'round' : ''}.`,
     sourceUrl,
     weekFolder
   };
@@ -154,6 +164,8 @@ function generateTypeScriptFile(deals) {
   const content = `// Auto-generated from CSV files in funding_data/
 // Last updated: ${new Date().toISOString()}
 // Total deals: ${sortedDeals.length}
+// Currency conversion: 1 USD = ₹${USD_TO_INR} INR (as of ${LAST_UPDATED})
+// To update exchange rate: Edit config/currency.js and run 'npm run generate-data'
 
 export interface FundingDeal {
   id: string;
