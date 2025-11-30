@@ -1,8 +1,13 @@
 import { fundingData } from "@/data/funding-data"
+import { formatFundingAmount, isFundingDisclosed } from "@/lib/utils"
 
 export function HeroStats() {
-  const totalFunding = fundingData.reduce((sum, d) => sum + d.amount, 0)
+  // Only count disclosed funding amounts
+  const disclosedDeals = fundingData.filter((d) => isFundingDisclosed(d.amount))
+  const totalFunding = disclosedDeals.reduce((sum, d) => sum + d.amount, 0)
   const totalDeals = fundingData.length
+  const disclosedDealsCount = disclosedDeals.length
+
   const sectors = Array.from(new Set(fundingData.flatMap((d) => d.sectors)))
   const topSector = sectors.reduce(
     (acc, sector) => {
@@ -11,7 +16,10 @@ export function HeroStats() {
     },
     { sector: "", count: 0 },
   )
-  const largestDeal = fundingData.reduce((max, d) => (d.amount > max.amount ? d : max))
+  const largestDeal =
+    disclosedDeals.length > 0
+      ? disclosedDeals.reduce((max, d) => (d.amount > max.amount ? d : max), disclosedDeals[0])
+      : { company: "N/A", amount: 0 }
 
   return (
     <div>
@@ -24,20 +32,24 @@ export function HeroStats() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
         <div className="neo-border neo-hover p-6 bg-white">
-          <div className="text-3xl font-bold text-green-700 mb-2">₹{(totalFunding / 1000).toFixed(1)}B</div>
-          <div className="text-xs font-bold uppercase text-gray-600">Total Funding</div>
+          <div className="text-3xl font-bold text-green-700 mb-2">{formatFundingAmount(totalFunding)}</div>
+          <div className="text-xs font-bold uppercase text-gray-600">Total Disclosed Funding</div>
+          <div className="text-xs text-gray-500 mt-1">{disclosedDealsCount} of {totalDeals} deals</div>
         </div>
         <div className="neo-border neo-hover p-6 bg-white">
           <div className="text-3xl font-bold text-green-700 mb-2">{totalDeals}</div>
           <div className="text-xs font-bold uppercase text-gray-600">Total Deals</div>
+          <div className="text-xs text-gray-500 mt-1">{totalDeals - disclosedDealsCount} undisclosed</div>
         </div>
         <div className="neo-border neo-hover p-6 bg-white">
           <div className="text-3xl font-bold text-green-700 mb-2">{topSector.count}</div>
           <div className="text-xs font-bold uppercase text-gray-600">{topSector.sector}</div>
+          <div className="text-xs text-gray-500 mt-1">Most Active Sector</div>
         </div>
         <div className="neo-border neo-hover p-6 bg-white">
-          <div className="text-3xl font-bold text-green-700 mb-2">₹{(largestDeal.amount / 100).toFixed(0)}Cr</div>
+          <div className="text-3xl font-bold text-green-700 mb-2">{formatFundingAmount(largestDeal.amount)}</div>
           <div className="text-xs font-bold uppercase text-gray-600">Largest Deal</div>
+          <div className="text-xs text-gray-500 mt-1">{largestDeal.company}</div>
         </div>
       </div>
     </div>

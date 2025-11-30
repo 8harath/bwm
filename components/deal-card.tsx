@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { formatFundingAmount } from "@/lib/utils"
 
 interface DealCardProps {
   deal: {
@@ -28,7 +29,7 @@ export function DealCard({ deal }: DealCardProps) {
         </div>
 
         <div className="mb-4">
-          <div className="text-2xl font-bold text-green-700 mb-1">₹{(deal.amount / 100).toFixed(0)}Cr</div>
+          <div className="text-2xl font-bold text-green-700 mb-1">{formatFundingAmount(deal.amount)}</div>
           <div className="flex flex-wrap gap-2">
             {deal.sectors.map((sector) => (
               <span key={sector} className="neo-border-accent px-2 py-1 text-xs font-semibold bg-white">
