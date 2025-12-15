@@ -1,5 +1,5 @@
 // Auto-generated from CSV files in funding_data/
-// Last updated: 2025-11-30T13:29:36.222Z
+// Last updated: 2025-12-15T13:09:08.603Z
 // Total deals: 1695
 // Currency conversion: 1 USD = ₹83.5 INR (as of 2025-11-30)
 // To update exchange rate: Edit config/currency.js and run 'npm run generate-data'
